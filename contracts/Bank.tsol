@@ -17,7 +17,7 @@ contract Bank {
   uint public loanNum;
 
   event LoanTaken(address user, uint loanNum);
-  event RepayfromUserSuccess(address user, uint TotalRepay);
+  event RepayfromUserSuccess(address user, uint bankProfit);
 
   //modifier: owner(=bank)만 함수를 사용할 수 있게 해줌
   modifier onlyOwner() {
@@ -69,16 +69,17 @@ contract Bank {
     require(msg.sender == user, 1003);
 
     if(_repayAmount != calculating()){
-      //상환거부
-      // User(user).repayRejected();
+      // reject repayment
+      User(user).repayRejected();
       return;
     }
-    // User(user).repayAccepted(_repayAmount);
-    bankProfit += (_repayAmount - loanNum);
+    User(user).repayAccepted(_repayAmount);
+    
+    bankProfit += (_repayAmount - loanNum); //50
     loanNum = 0;
     isLoanAvailable = true;
 
-    emit RepayfromUserSuccess(user,_repayAmount);
+    emit RepayfromUserSuccess(user,bankProfit);
   }
 
   function getInterestRate() external view returns (uint) {
