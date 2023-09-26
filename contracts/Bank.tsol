@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma ever-solidity >=0.61.2;
+
+import "./User.tsol";
+
+contract Bank {
+  //bank owner만이 대출을 해줄 수 있다..
+  uint256 public owner;
+  address public user;
+  //이자율
+  uint public interestRate;
+  //누적되는 bank의 이익
+  uint public bankProfit;
+  //1개의 대출만 허용가능
+  bool public isLoanAvailable;
+  //대출량
+  uint public loanNum;
+
+  event LoanTaken(address user, uint loanNum);
+  event RepayfromUserSuccess(address user, uint TotalRepay);
+
+  //modifier: owner(=bank)만 함수를 사용할 수 있게 해줌
+  modifier onlyOwner() {
+    require(msg.pubkey() == owner, 1001);
+    _;
+  }
+
+  //최초 이자율 설정
+  // constructor(uint _interestRate, uint256 _owner) public {
+  constructor(uint _interestRate) public {
+    tvm.accept();
+    //There is no msg.sender inside the constructor,because this contract was deployed by external message
+    //So you can take an argument from a constructor '_owner'
+    // owner = _owner;
+    interestRate = _interestRate;
+    isLoanAvailable = true;
+  }
+
+
+  //1.for taking loan
+  function loan(uint _loanNum) external {
+    //when the method are calling from another contract, you don't have to use 'tvm.accept()'
+    require(isLoanAvailable, 1002);
+    loanNum = _loanNum;
+    user = msg.sender;
+    //after The bank has provided the loan, isLoanAvailable flag will be set to false
+    isLoanAvailable = false;
+    //Check comments in User.borrowMoney
+    User(user).loanReceived(loanNum);
+    emit LoanTaken(user, loanNum);
+  }
+
+  //2.for repaying loan with interest
+  //interest rate should be configured before bank could be used for giving loans
+  //and bank owner can do this.
+  function configuredInterestRate(uint _interestRate) external onlyOwner {
+    tvm.accept();
+    interestRate = _interestRate;
+  }
+
+  //check comments in User.repayLoan
+  function calculating() public view returns (uint) {
+    uint TotalRepay;
+    TotalRepay = (loanNum * (100 + interestRate)) / 100;
+    return TotalRepay;
+  }
+
+  function repaying(uint128 _repayAmount) external {
+    require(msg.sender == user, 1003);
+
+    if(_repayAmount != calculating()){
+      //상환거부
+      // User(user).repayRejected();
+      return;
+    }
+    // User(user).repayAccepted(_repayAmount);
+    bankProfit += (_repayAmount - loanNum);
+    loanNum = 0;
+    isLoanAvailable = true;
+
+    emit RepayfromUserSuccess(user,_repayAmount);
+  }
+
+  function getInterestRate() external view returns (uint) {
+    return interestRate;
+  }
+
+  function getProfit() external view returns (uint) {
+    return bankProfit;
+  }
+}

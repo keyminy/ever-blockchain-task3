@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma ever-solidity >=0.61.2;
+import "./Bank.tsol";
+
+
+
+contract User {
+  //user가 소유한 돈(대출하면 추가)
+  uint public money;
+
+  Bank public bank;
+
+  event BorrowedMoney(address user, uint _amount);
+  event receivedSuccess(uint _loanNum);
+
+  event LoanRepay(address user, uint repayAmount);
+  event repaySuccess(uint _totalRepayAmount);
+  event RepayRejected(string message);
+
+  constructor(address _bank, uint128 _initialBalance) public {
+    tvm.accept();
+    //초기 자금을 생성자를 통해서 설정하고 약간의 돈이 있다고 가정한다
+    bank = Bank(_bank);
+    money = _initialBalance;
+  }
+
+  //1.borrowingMoney from the bank
+  function borrowMoney(uint _amount) external {
+    Bank(bank).loan(_amount);
+    //todo you need to increase money after receving callback from Bank
+    //,so the chain will be looks like this
+    //User.borrowMoney -> Bank.loan -> User.loanReceived
+    emit BorrowedMoney(msg.sender, _amount);
+  }
+
+  //function loanReceived(...) //function that can be called only by Bank contract
+  //and only after it we need to increase our money, and emit an event
+  function loanReceived(uint _loanNum) external {
+    money += _loanNum;
+    emit receivedSuccess(_loanNum);
+  }
+
+  //Bank contract should include function for calculating, this function can be called off chain
+  //Then User.repayLoan() -> Bank.acceptRepay() (there are some validations) -> User.repayAccepted()||User.repayRejected()
+  function repayLoan(
+    //better to provide how many tokens you are going to repay
+    uint128 _repayAmount
+  ) external {
+    tvm.accept();
+    //check available money, May be you don't have enough money for repaying?
+    require(money > _repayAmount, 1005);
+
+    //then provide counts of tokens to the repaying method
+    bank.repaying(_repayAmount);
+
+    //That is it for this method, now we are waiting for response from bank contract
+    //        uint repayAmount;
+    //        uint Rate = Bank.getInterestRate();
+    //        repayAmount = money * (100 + Rate) / 100;
+    //        money = 0;
+    //        emit LoanRepay(msg.sender, repayAmount);
+  }
+
+  //2.repaying loan : accept / reject
+  function repayAccepted(uint _totalRepayAmount) external {
+    require(_totalRepayAmount <= money, 1008);
+    money -= _totalRepayAmount;
+    emit repaySuccess(_totalRepayAmount);
+  }
+
+  function repayRejected() external {
+    emit RepayRejected("Repay rejected!!");
+  }
+
+  function getMoney() external view returns (uint _money) {
+    _money = money;
+  }
+}
