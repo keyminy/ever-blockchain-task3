@@ -25,8 +25,9 @@ contract User {
     money = _initialBalance;
   }
 
-  //1.borrowingMoney from the bank
+  //1.borrowing Money from the bank
   function borrowMoney(uint _amount) external {
+    tvm.accept();
     Bank(bank).loan(_amount);
     //todo you need to increase money after receving callback from Bank
     //,so the chain will be looks like this
