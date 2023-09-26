@@ -11,10 +11,10 @@ contract User {
   Bank public bank;
 
   event BorrowedMoney(address user, uint _amount);
-  event receivedSuccess(uint _loanNum);
+  event receivedSuccess(uint money);
 
   event LoanRepay(address user, uint repayAmount);
-  event repaySuccess(uint _totalRepayAmount);
+  event repaySuccess(uint money);
   event RepayRejected(string message);
 
   constructor(address _bank, uint128 _initialBalance) public {
@@ -39,11 +39,11 @@ contract User {
   //and only after it we need to increase our money, and emit an event
   function loanReceived(uint _loanNum) external {
     money += _loanNum;
-    emit receivedSuccess(_loanNum);
+    emit receivedSuccess(money);
   }
 
   //Bank contract should include function for calculating, this function can be called off chain
-  //Then User.repayLoan() -> Bank.acceptRepay() (there are some validations) -> User.repayAccepted()||User.repayRejected()
+  //Then User.repayLoan() -> Bank.repaying() (there are some validations) -> User.repayAccepted()||User.repayRejected()
   function repayLoan(
     //better to provide how many tokens you are going to repay
     uint128 _repayAmount
@@ -67,7 +67,7 @@ contract User {
   function repayAccepted(uint _totalRepayAmount) external {
     require(_totalRepayAmount <= money, 1008);
     money -= _totalRepayAmount;
-    emit repaySuccess(_totalRepayAmount);
+    emit repaySuccess(money);
   }
 
   function repayRejected() external {

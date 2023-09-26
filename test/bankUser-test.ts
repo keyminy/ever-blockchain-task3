@@ -40,7 +40,8 @@ describe("BankUserTest", async function () {
     });
 
     it("Interact with contract", async function () {
-      const { traceTree: test } = await locklift.tracing.trace(
+      /* 2.Taking loan to the user */
+      const { traceTree } = await locklift.tracing.trace(
         user.methods
           .borrowMoney({
             _amount: 1000,
@@ -49,31 +50,34 @@ describe("BankUserTest", async function () {
             publicKey: signer1.publicKey,
           }),
       );
-      await test?.beautyPrint();
-      // await traceTree?.beautyPrint();
+      await traceTree?.beautyPrint();
 
-      // const totalRepayAmount = await bank.methods.calculating().call();
+      const totalRepayAmount = await bank.methods.calculating().call();
 
-      // const { traceTree: traceTree2 } = await locklift.tracing.trace(
-      //   user.methods.repayLoan({ _repayAmount: 1030 }).sendExternal({
-      //     publicKey: signer1.publicKey,
-      //   }),
-      // );
-      // await traceTree2?.beautyPrint();
+      console.log(totalRepayAmount); // (1000*(100+5)) / 100 = 1050
 
-      // const response = await bank.methods.getProfit({}).call();
-      // console.log(response);
-      // const response2 = await user.methods.getMoney().call();
-      // console.log(response2);
-      // const { traceTree: SecondLoan } = await locklift.tracing.trace(
-      //   user.methods
-      //     .borrowMoney({
-      //       _amount: 100000,
-      //     })
-      //     .sendExternal({
-      //       publicKey: signer1.publicKey,
-      //     }),
-      // );
+      /* 2.Repaying loan with interest */
+      const { traceTree: traceTree2 } = await locklift.tracing.trace(
+        user.methods.repayLoan({ _repayAmount: 1050 }).sendExternal({
+          publicKey: signer1.publicKey,
+        }),
+      );
+      await traceTree2?.beautyPrint();
+
+      const response = await bank.methods.getProfit({}).call();
+      console.log(response);
+      const response2 = await user.methods.getMoney().call();
+      console.log(response2);
+
+      const { traceTree: SecondLoan } = await locklift.tracing.trace(
+        user.methods
+          .borrowMoney({
+            _amount: 100000,
+          })
+          .sendExternal({
+            publicKey: signer1.publicKey,
+          }),
+      );
       // await SecondLoan?.beautyPrint();
       // const { traceTree: SecondRepaid } = await locklift.tracing.trace(
       //   user.methods.repayLoan({}).sendExternal({
@@ -81,8 +85,10 @@ describe("BankUserTest", async function () {
       //   }),
       // );
       // await SecondRepaid?.beautyPrint();
-      // const response2 = await bank.methods.getProfit({}).call();
-      // console.log(response2);
+      // const response3 = await bank.methods.getProfit({}).call();
+      // console.log(response3);
+      // const response4 = await user.methods.getMoney().call();
+      // console.log(response4);
     });
   });
 });
