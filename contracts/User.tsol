@@ -19,13 +19,15 @@ contract User {
 
   constructor(address _bank, uint128 _initialBalance) public {
     tvm.accept();
+    //assuming we have little money
     //초기 자금을 생성자를 통해서 설정하고 약간의 돈이 있다고 가정한다
     bank = Bank(_bank);
     money = _initialBalance;
   }
 
-  //1.borrowingMoney from the bank
+  //1.borrowing Money from the bank
   function borrowMoney(uint _amount) external {
+    tvm.accept();
     Bank(bank).loan(_amount);
     //todo you need to increase money after receving callback from Bank
     //,so the chain will be looks like this
