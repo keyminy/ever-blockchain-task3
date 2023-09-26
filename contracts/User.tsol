@@ -19,6 +19,7 @@ contract User {
 
   constructor(address _bank, uint128 _initialBalance) public {
     tvm.accept();
+    //assuming we have little money
     //초기 자금을 생성자를 통해서 설정하고 약간의 돈이 있다고 가정한다
     bank = Bank(_bank);
     money = _initialBalance;
