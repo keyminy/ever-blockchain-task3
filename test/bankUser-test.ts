@@ -31,7 +31,7 @@ describe("BankUserTest", async function () {
           initParams: {},
           constructorParams: {
             _bank: bank.address,
-            _initialBalance: 222,
+            _initialBalance: 3000,
           },
           value: toNano(10),
           publicKey: signer1.publicKey,
@@ -54,7 +54,7 @@ describe("BankUserTest", async function () {
 
       const totalRepayAmount = await bank.methods.calculating().call();
 
-      console.log(totalRepayAmount); // (1000*(100+5)) / 100 = 1050
+      console.log("totalRepayAmount : ", totalRepayAmount); // (1000*(100+5)) / 100 = 1050
 
       /* 2.Repaying loan with interest */
       const { traceTree: traceTree2 } = await locklift.tracing.trace(
@@ -65,30 +65,31 @@ describe("BankUserTest", async function () {
       await traceTree2?.beautyPrint();
 
       const response = await bank.methods.getProfit({}).call();
-      console.log(response);
+      console.log("getProfit : ", response);
       const response2 = await user.methods.getMoney().call();
-      console.log(response2);
+      console.log("getMoney : ", response2);
 
+      /* Taking second loan */
       const { traceTree: SecondLoan } = await locklift.tracing.trace(
         user.methods
           .borrowMoney({
-            _amount: 100000,
+            _amount: 2000,
           })
           .sendExternal({
             publicKey: signer1.publicKey,
           }),
       );
-      // await SecondLoan?.beautyPrint();
-      // const { traceTree: SecondRepaid } = await locklift.tracing.trace(
-      //   user.methods.repayLoan({}).sendExternal({
-      //     publicKey: signer1.publicKey,
-      //   }),
-      // );
-      // await SecondRepaid?.beautyPrint();
-      // const response3 = await bank.methods.getProfit({}).call();
-      // console.log(response3);
-      // const response4 = await user.methods.getMoney().call();
-      // console.log(response4);
+      await SecondLoan?.beautyPrint();
+      const { traceTree: SecondRepaid } = await locklift.tracing.trace(
+        user.methods.repayLoan({ _repayAmount: 2100 }).sendExternal({
+          publicKey: signer1.publicKey,
+        }),
+      );
+      await SecondRepaid?.beautyPrint();
+      const response3 = await bank.methods.getProfit({}).call();
+      console.log("getProfit : ", response3);
+      const response4 = await user.methods.getMoney().call();
+      console.log("getMoney : ", response4);
     });
   });
 });
